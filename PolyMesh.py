@@ -7,17 +7,22 @@ from mathutils import Matrix
 from . import utils
 
 class PolyMesh():
-
-    
-    def __init__(self,mesh,materials):
+    def __init__(self,mesh,materials,scene):
         self.mesh = mesh
-        self.meshdata = mesh.data
+        if len(mesh.modifiers) > 0:
+            self.meshdata = mesh.to_mesh(scene,True,'RENDER')
+            self.mustCleanup = True
+        else:
+            self.meshdata = mesh.data
+            self.mustCleanup = False
+
         self.materials = materials
 
     def write(self):
         # create the node
         self.amesh = AiNode(b"polymesh")
         AiNodeSetStr(self.amesh,b"name",self.mesh.name.encode('utf-8')) 
+
         # create shorthand variables
         faces = self.meshdata.faces
         vertices = self.meshdata.vertices
@@ -63,4 +68,8 @@ class PolyMesh():
             matid = mat.as_pointer()
             if matid in self.materials.materialDict.keys():
                 AiNodeSetPtr(self.amesh,b"shader",self.materials.materialDict[matid])
-                
+
+        # delete data block if modifiers applied
+        if self.mustCleanup:
+            bpy.data.meshes.remove(self.meshdata)
+

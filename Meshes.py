@@ -26,7 +26,7 @@ class Meshes:
     def writeMeshes(self):
         for i in self.scene.objects:
             if i.hide_render == False and i.type == "MESH":
-                mesh = PolyMesh.PolyMesh(i,self.materials)
+                mesh = PolyMesh.PolyMesh(i,self.materials,self.scene)
                 mesh.write()
 
 

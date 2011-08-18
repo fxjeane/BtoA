@@ -73,11 +73,11 @@ class Renderer(bpy.types.RenderEngine):
     def render_preview(self, scene):
         global BtoARend
         global BtoABuckets
-        #self.scene = scene
+        self.scene = scene
         #return
 
         AiBegin()
-        AiMsgSetConsoleFlags(AI_LOG_ALL)
+        #AiMsgSetConsoleFlags(AI_LOG_ALL)
         # Filter
         filter = AiNode(b"cook_filter")
         AiNodeSetStr(filter,b"name",b"outfilter")

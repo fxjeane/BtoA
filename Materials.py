@@ -3,7 +3,6 @@ from arnold import *
 from bpy.props import CollectionProperty,StringProperty, BoolProperty, IntProperty, FloatProperty, FloatVectorProperty, EnumProperty, PointerProperty
 
 if "bpy" in locals():
-    #imp.reload(PolyMesh)
     pass
 else:
     import bpy
@@ -13,6 +12,9 @@ else:
 # custom material properties
 #
 ########################
+def rnaPropUpdate(self, context):
+    self.update_tag() # this is a func from material, material is the self here if I'm not mistaken
+
 class BtoAStandardMaterialSettings(bpy.types.PropertyGroup):
     specularRoughness = FloatProperty(
                 name="Roughness", description="Specular Roughness",
@@ -30,7 +32,7 @@ class BtoAStandardMaterialSettings(bpy.types.PropertyGroup):
 
     specularRotation = FloatProperty(
                 name="Aniso Rotation", description="Specular Anisotropy Rotation",
-                max = 1, min = 0,default=0)
+                max = 1, min = 0,default=0,update=rnaPropUpdate)
 
 bpy.utils.register_class(BtoAStandardMaterialSettings)
 
@@ -50,34 +52,6 @@ class BtoAMaterialSettings(bpy.types.PropertyGroup):
 bpy.utils.register_class(BtoAMaterialSettings)
 bpy.types.Material.BtoA = PointerProperty(type=BtoAMaterialSettings,name='BtoA')
 
-mat = bpy.types.Material
-mat.BtoAShaderType = EnumProperty(items=(("FLAT","Flat",""),
-                         ("AMBIENT_OCCLUSION","Ambient Occlusion",""),
-                         ("LAMBERT","Lambert",""),
-                         ("STANDARD","Standard",""),
-                         ("UTILITY","Utility",""),
-                         ("WIREFRAME","Wireframe","")),
-                         name="Shader", description="AA pattern", 
-                         default="STANDARD")
-
-mat.BtoAStandardSpecRough = FloatProperty(
-            name="Roughness", description="Specular Roughness",
-            max = 1, min = 0,default=0.25)
-
-mat.BtoAStandardSpecBrdf = EnumProperty(items=(("0","Stretched Phong",""),
-                             ("1","Ward Duer",""),
-                             ("2","Cook Torrance","")),
-                             name="BRDF", description="Specular BRDF", 
-                             default="0")
-
-mat.BtoAStandardSpecAniso = FloatProperty(
-            name="Anisotropy", description="Specular Anisotropy",
-            max = 1, min = 0,default=0.5)
-
-mat.BtoAStandardSpecRot = FloatProperty(
-            name="Aniso Rotation", description="Specular Anisotropy Rotation",
-            max = 1, min = 0,default=0)
-
 from bl_ui import properties_material
 pm = properties_material
 
@@ -93,12 +67,9 @@ class BtoA_material_shader_gui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-
         mat = pm.active_node_mat(context.material)
         split = layout.split()
-
         split.prop(mat.BtoA,"shaderType")
-        #split.prop(mat.BtoAShaderType,"shaderType")
 
 class BtoA_material_diffuse_gui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Diffuse"
@@ -112,11 +83,8 @@ class BtoA_material_diffuse_gui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-
         mat = pm.active_node_mat(context.material)
-
         split = layout.split()
-
         col = split.column()
         col.prop(mat, "diffuse_color", text="")
         sub = col.column()
@@ -131,8 +99,7 @@ class BtoA_material_diffuse_gui(pm.MaterialButtonsPanel, bpy.types.Panel):
         #col = layout.column()
         #col.active = (not mat.use_shadeless)
         
-        #if mat.BtoA.shaderType == 'STANDARD':
-        if mat.BtoAShaderType == 'STANDARD':
+        if mat.BtoA.shaderType == 'STANDARD':
             col.prop(mat, "roughness")
 
         #elif mat.diffuse_shader == 'MINNAERT':
@@ -170,31 +137,24 @@ class MATERIAL_PT_specular(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-
         mat = pm.active_node_mat(context.material)
-
         layout.active = (not mat.use_shadeless)
-
         split = layout.split()
-
         col = split.column()
         col.prop(mat, "specular_color", text="")
         col.prop(mat, "specular_intensity", text="Intensity")
-
         col = split.column()
-        #col.prop(mat.BtoA.standard, "specularBrdf", text="")
-        col.prop(mat.BtoAStandard, "specularBrdf", text="")
+        col.prop(mat.BtoA.standard, "specularBrdf", text="")
         #col.prop(mat, "use_specular_ramp", text="Ramp")
 
         col = layout.column()
-        #col.prop(mat.BtoA.standard, "specularRoughness", text="Roughness")
-        col.prop(mat.BtoAStandard, "specularRoughness", text="Roughness")
-        #if mat.BtoA.standard.specularBrdf == "1":
-        if mat.BtoAStandardSpecBrdf == "1":
-            #col.prop(mat.BtoA.standard, "specularAnisotropy", text="Anisotropy")
-            col.prop(mat.BtoAStandard, "specularAnisotropy", text="Anisotropy")
-            #col.prop(mat.BtoA.standard, "specularRotation", text="Rotation")
-            col.prop(mat.BtoAStandard, "specularRotation", text="Rotation")
+        col.prop(mat.BtoA.standard, "specularRoughness", text="Roughness")
+        if mat.BtoA.standard.specularBrdf == "1":
+        #if mat.BtoAStandardSpecBrdf == "1":
+            col.prop(mat.BtoA.standard, "specularAnisotropy", text="Anisotropy")
+            #col.prop(mat.BtoAStandard, "specularAnisotropy", text="Anisotropy")
+            col.prop(mat.BtoA.standard, "specularRotation", text="Rotation")
+            #col.prop(mat.BtoAStandard, "specularRotation", text="Rotation")
         
         #if mat.specular_shader in {'COOKTORR', 'PHONG'}:
         #    col.prop(mat, "BtoA_standard_spec_roughness", text="Roughness")
@@ -231,11 +191,11 @@ for member in dir(properties_material):
 
 del properties_material
 
-def writeStandardMaterial(mat):
+def writeStandardMaterial(materialDict,mat):
     standard = AiNode(b"standard")
     AiNodeSetStr(standard,b"name",mat.name.encode('utf-8'))
 
-    self.materialDict[mat.as_pointer()] = standard
+    materialDict[mat.as_pointer()] = standard
     AiNodeSetRGB(standard,b"Kd_color",mat.diffuse_color.r,
                                       mat.diffuse_color.g,
                                       mat.diffuse_color.b)
@@ -244,14 +204,10 @@ def writeStandardMaterial(mat):
                                       mat.specular_color.g,
                                       mat.specular_color.b)
     AiNodeSetFlt(standard,b"Ks",mat.specular_intensity)
-    AiNodeSetFlt(standard,b"specular_roughness",mat.BtoAStandardSpecRough)
-    AiNodeSetInt(standard,b"specular_brdf",int(mat.BtoAStandardSpecBrdf))
-    AiNodeSetFlt(standard,b"specular_anisotropy",mat.BtoAStandardSpecAniso)
-    AiNodeSetFlt(standard,b"specular_rotation",mat.BtoAStandardSpecRot)
-    #AiNodeSetFlt(standard,b"specular_roughness",mat.BtoA.standard.specularRoughness)
-    #AiNodeSetInt(standard,b"specular_brdf",int(mat.BtoA.standard.specularBrdf))
-    #AiNodeSetFlt(standard,b"specular_anisotropy",mat.BtoA.standard.specularAnisotropy)
-    #AiNodeSetFlt(standard,b"specular_rotation",mat.BtoA.standard.specularRotation)
+    AiNodeSetFlt(standard,b"specular_roughness",mat.BtoA.standard.specularRoughness)
+    AiNodeSetInt(standard,b"specular_brdf",int(mat.BtoA.standard.specularBrdf))
+    AiNodeSetFlt(standard,b"specular_anisotropy",mat.BtoA.standard.specularAnisotropy)
+    AiNodeSetFlt(standard,b"specular_rotation",mat.BtoA.standard.specularRotation)
 
     return standard
 
@@ -270,27 +226,11 @@ class Materials:
     def writeMaterial(self,mat):
         outmat = None
         #print("MAT=",dir(mat.BtoA.shaderType))
-        if mat.BtoAShaderType == 'STANDARD':
-            #print("WROTE MATERIAL")
-            standard = AiNode(b"standard")
-            AiNodeSetStr(standard,b"name",mat.name.encode('utf-8'))
-
-            self.materialDict[mat.as_pointer()] = standard
-            AiNodeSetRGB(standard,b"Kd_color",mat.diffuse_color.r,
-                                              mat.diffuse_color.g,
-                                              mat.diffuse_color.b)
-            AiNodeSetFlt(standard,b"Kd",mat.diffuse_intensity)
-            AiNodeSetRGB(standard,b"Ks_color",mat.specular_color.r,
-                                              mat.specular_color.g,
-                                              mat.specular_color.b)
-            AiNodeSetFlt(standard,b"Ks",mat.specular_intensity)
-            AiNodeSetFlt(standard,b"specular_roughness",mat.BtoAStandardSpecRough)
-            AiNodeSetInt(standard,b"specular_brdf",int(mat.BtoAStandardSpecBrdf))
-            AiNodeSetFlt(standard,b"specular_anisotropy",mat.BtoAStandardSpecAniso)
-            AiNodeSetFlt(standard,b"specular_rotation",mat.BtoAStandardSpecRot)
-            #outmat =writeStandardMaterial(mat)
-        elif mat.BtoAShaderType =='AMBIENT_OCCLUSION':
-            outmat = writeAmbientOcclusion(mat)
+        if mat.BtoA.shaderType == 'STANDARD':
+            print("WROTE MATERIAL")
+            outmat =writeStandardMaterial(self.materialDict,mat)
+        elif mat.BtoA.shaderType =='AMBIENT_OCCLUSION':
+            outmat = writeAmbientOcclusion(self.materialDict,mat)
 
         #AiNodeSetFlt(standard,b"Phong_exponent",0.1)
         return outmat
