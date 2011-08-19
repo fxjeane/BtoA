@@ -191,11 +191,8 @@ for member in dir(properties_material):
 
 del properties_material
 
-def writeStandardMaterial(materialDict,mat):
+def writeStandardMaterial(mat):
     standard = AiNode(b"standard")
-    AiNodeSetStr(standard,b"name",mat.name.encode('utf-8'))
-
-    materialDict[mat.as_pointer()] = standard
     AiNodeSetRGB(standard,b"Kd_color",mat.diffuse_color.r,
                                       mat.diffuse_color.g,
                                       mat.diffuse_color.b)
@@ -212,7 +209,14 @@ def writeStandardMaterial(materialDict,mat):
     return standard
 
 def writeAmbientOcclusion(mat):
-    pass
+    ao = AiNode(b"ambien_occlusion")
+    return ao
+
+def writeWireframe(mat):
+    ao = AiNode(b"wireframe")
+    AiNodeSetFlt(ao,b"line_width",2)
+    AiNodeSetInt(ao,b"edge_type",1)
+    return ao
 
 class Materials:
     def __init__(self, scene):
@@ -225,14 +229,15 @@ class Materials:
 
     def writeMaterial(self,mat):
         outmat = None
-        #print("MAT=",dir(mat.BtoA.shaderType))
         if mat.BtoA.shaderType == 'STANDARD':
-            print("WROTE MATERIAL")
-            outmat =writeStandardMaterial(self.materialDict,mat)
+            outmat =writeStandardMaterial(mat)
         elif mat.BtoA.shaderType =='AMBIENT_OCCLUSION':
-            outmat = writeAmbientOcclusion(self.materialDict,mat)
+            outmat = writeAmbientOcclusion(mat)
+        elif mat.BtoA.shaderType =='WIREFRAME':
+            outmat = writeWireframe(mat)
 
-        #AiNodeSetFlt(standard,b"Phong_exponent",0.1)
+        AiNodeSetStr(outmat,b"name",mat.name.encode('utf-8'))
+        self.materialDict[mat.as_pointer()] = outmat
         return outmat
 
  

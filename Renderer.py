@@ -95,6 +95,8 @@ class Renderer(bpy.types.RenderEngine):
         AiNodeSetInt(options,b"xres",self.size_x)
         AiNodeSetInt(options,b"yres",self.size_y)
         AiNodeSetInt(options,b"AA_samples",2)
+        AiNodeSetInt(options,b"GI_diffuse_depth",1)
+        AiNodeSetInt(options,b"GI_glossy_depth",1)
         
         cam = AiNode(b"persp_camera")
         AiNodeSetPtr(options,b"camera",cam)
@@ -103,20 +105,47 @@ class Renderer(bpy.types.RenderEngine):
         pos = AiArrayAllocate(1,1,AI_TYPE_POINT)
         AiArraySetPnt(pos,0,AtPoint(1,1,0)) 
         AiNodeSetArray(li01,b"position",pos)
+        # light 2
+        li02 = AiNode(b"point_light")
+        pos = AiArrayAllocate(1,1,AI_TYPE_POINT)
+        AiArraySetPnt(pos,0,AtPoint(-1,-0.2,0)) 
+        AiNodeSetArray(li02,b"position",pos)
 
-        # material
+        # materials
         pm = self._getPreviewMaterial(scene)
         if pm == None:
             return
         materials = Materials(scene)
         mat = materials.writeMaterial(pm)
-
+        
+        floorMat = AiNode(b"standard")
+        rwallMat = AiNode(b"standard")
+        AiNodeSetRGB(rwallMat,b"Kd_color",1,0,0) 
+        lwallMat = AiNode(b"standard")
+        AiNodeSetRGB(lwallMat,b"Kd_color",0,0,1) 
+        
+        # sphere
         sp = AiNode(b"sphere")
         AiNodeSetPtr(sp,b"shader",mat)
-        AiNodeSetPnt(sp,b"center",0,0,-2.5)
+        AiNodeSetPnt(sp,b"center",0,0,-2.75)
         
+        # walls
+        floor = AiNode(b"plane")
+        AiNodeSetPnt(floor,b"point",0,-0.5,0)
+        AiNodeSetVec(floor,b"normal",0,1,0)
+        AiNodeSetPtr(floor,b"shader",floorMat)
+        rwall = AiNode(b"plane")
+        AiNodeSetPnt(rwall,b"point",-2.5,0,-3)
+        AiNodeSetVec(rwall,b"normal",-0.75,0,-0.15)
+        AiNodeSetPtr(rwall,b"shader",rwallMat)
+        lwall = AiNode(b"plane")
+        AiNodeSetPnt(lwall,b"point",2.5,0,-3)
+        AiNodeSetVec(lwall,b"normal",0.75,0,-0.15)
+        AiNodeSetPtr(lwall,b"shader",lwallMat)
+
         BtoABuckets = {}
-        res = AiRender(AI_RENDER_MODE_CAMERA)
+        #res = AiRender(AI_RENDER_MODE_CAMERA)
+        self.__DoProgressiveRender()
         BtoABuckets = {}
         AiEnd()
 
@@ -152,31 +181,17 @@ class Renderer(bpy.types.RenderEngine):
         # Material
         materials = Materials(self.scene)
         materials.writeMaterials()
-        #shinny = AiNode(b"standard")
-        #AiNodeSetRGB(shinny,b"Kd_color",0,1,1)
-        #AiNodeSetFlt(shinny,b"Ks",0.5)
-        #AiNodeSetFlt(shinny,b"specular_roughness",0.44)
         
-        #matte = AiNode(b"standard")
-        #AiNodeSetRGB(matte,b"Kd_color",1,1,0)
-        
-       
         # Meshes
         meshes = Meshes(scene,materials)
         meshes.writeMeshes()
- 
-
-        #sp2 = AiNode(b"sphere")
-        #AiNodeSetPtr(sp2,b"shader",shinny)
-        #AiNodeSetPnt(sp2,b"center",0,0,1)
-
 
         BtoABuckets = {}
         if (scene.BtoA_enable_progressive):
             self.__DoProgressiveRender()
         else:
             res = AiRender(AI_RENDER_MODE_CAMERA)
-        AiASSWrite(b"/tmp/.ass/everything.ass", AI_NODE_ALL, False);    
+        #AiASSWrite(b"/tmp/.ass/everything.ass", AI_NODE_ALL, False);    
         BtoABuckets = {}
         AiEnd()
 
@@ -212,14 +227,14 @@ class Renderer(bpy.types.RenderEngine):
             BtoABuckets["%s%s"%(x,y)]=bucket
             layer.rect = bucket
         else:
-            if self.scene.name !="preview":
-                size = width * height
-                try:
-                    bucket = BtoABuckets["%s%s"%(x,y)]
-                except:
-                    bucket = [[0,0,0,1]] * size
-                edge = [0.5,0.25,0.25,1]
+            size = width * height
+            try:
+                bucket = BtoABuckets["%s%s"%(x,y)]
+            except:
+                bucket = [[0,0,0,1]] * size
 
+            edge = [0.5,0.25,0.25,1]
+            if self.scene.name !="preview":
                 for i in range(0,size,width*2): 
                     bucket[i] = edge
                     bucket[i+width - 1] = edge
@@ -227,8 +242,7 @@ class Renderer(bpy.types.RenderEngine):
                     for j in range(i,i+width,2):
                         bucket[j] = edge
 
-                layer.rect = bucket
-        
+            layer.rect = bucket
         
         self.end_result(result)
         
