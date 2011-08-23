@@ -6,6 +6,7 @@ from .Options import *
 from .Camera import *
 from .Lights import *
 from .Materials import *
+from .Textures import *
 from .Meshes import *
 
 class Renderer(bpy.types.RenderEngine):
@@ -155,7 +156,7 @@ class Renderer(bpy.types.RenderEngine):
         self.scene = scene
      
         AiBegin()
-        AiMsgSetConsoleFlags(AI_LOG_ALL)
+        AiMsgSetConsoleFlags(AI_LOG_WARNINGS)
         
         # Filter
         filter = AiNode(b"cook_filter")
@@ -178,8 +179,12 @@ class Renderer(bpy.types.RenderEngine):
         lights = Lights()
         lights.writeLights()
 
+        # textures
+        textures = Textures(self.scene)
+        textures.writeTextures()
+
         # Material
-        materials = Materials(self.scene)
+        materials = Materials(self.scene,textures)
         materials.writeMaterials()
         
         # Meshes
@@ -191,7 +196,7 @@ class Renderer(bpy.types.RenderEngine):
             self.__DoProgressiveRender()
         else:
             res = AiRender(AI_RENDER_MODE_CAMERA)
-        #AiASSWrite(b"/tmp/.ass/everything.ass", AI_NODE_ALL, False);    
+        AiASSWrite(b"/tmp/.ass/everything.ass", AI_NODE_ALL, False);    
         BtoABuckets = {}
         AiEnd()
 

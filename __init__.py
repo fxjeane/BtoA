@@ -24,6 +24,7 @@ if "bpy" in locals():
     imp.reload(Camera)
     imp.reload(Lights)
     imp.reload(Materials)
+    imp.reload(Textures)
     imp.reload(Meshes)
 else:
     import bpy
@@ -35,6 +36,7 @@ else:
     from . import Camera
     from . import Lights
     from . import Materials
+    from . import Textures
     from . import Meshes
 
 
