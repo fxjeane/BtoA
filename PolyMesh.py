@@ -90,7 +90,6 @@ class PolyMesh():
                 AiNodeSetPtr(self.amesh,b"shader",self.materials.materialDict[matid])
         # Sub surface
         if self.subsurf != False:
-            print("INSERT")
             AiNodeSetInt(self.amesh,b"subdiv_type",1)
             AiNodeSetInt(self.amesh,b"subdiv_iterations",self.subsurf.render_levels)
             self.subsurf.show_render = True
