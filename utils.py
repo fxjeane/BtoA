@@ -1,7 +1,7 @@
 from arnold import *
+from mathutils import Matrix
 
 def MakeAtMatrix(bmatrix):
-
     matrix = AtMatrix()
     matrix.a00 = bmatrix[0][0]
     matrix.a01 = bmatrix[0][1]
@@ -20,6 +20,10 @@ def MakeAtMatrix(bmatrix):
     matrix.a32 = bmatrix[3][2]
     matrix.a33 = bmatrix[3][3]
     return matrix
+
+def getYUpMatrix(bmatrix):
+    rotMatrix = Matrix.Rotation(math.radians(-90),4,'X')  * bmatrix 
+    return MakeAtMatrix(rotMatrix)
 
 def mapValue(val):
     if val in [False,True]:

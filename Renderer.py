@@ -192,7 +192,7 @@ class Renderer(bpy.types.RenderEngine):
         meshes.writeMeshes()
 
         BtoABuckets = {}
-        if (scene.BtoA_enable_progressive):
+        if (scene.BtoA.enable_progressive):
             self.__DoProgressiveRender()
         else:
             res = AiRender(AI_RENDER_MODE_CAMERA)
@@ -257,7 +257,7 @@ class Renderer(bpy.types.RenderEngine):
         '''Handles the rendering of progressive refinement'''
         options = AiUniverseGetOptions()
         sampleLevel = AiNodeGetInt(options,b"AA_samples")
-        smin = min(self.scene.BtoA_progressive_min, sampleLevel)
+        smin = min(self.scene.BtoA.progressive_min, sampleLevel)
         smax = max(sampleLevel, smin)
 
         samples = [s for s in range(smin, smax + 1) if s != 0 and (s <= 1 or s == smax)]

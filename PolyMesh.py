@@ -77,8 +77,8 @@ class PolyMesh():
             AiNodeSetArray(self.amesh,b"uvlist",uvlist)
 
         # write the matrix
-        mmatrix = Matrix.Rotation(math.radians(-90),4,'X') * self.mesh.matrix_world
-        matrix = utils.MakeAtMatrix(mmatrix)
+        mmatrix =self.mesh.matrix_world
+        matrix = utils.getYUpMatrix(mmatrix)
         positions = AiArrayAllocate(1,1,AI_TYPE_MATRIX)
         AiArraySetMtx(positions,0,matrix)
         AiNodeSetArray(self.amesh,b'matrix',positions)

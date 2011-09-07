@@ -1,6 +1,5 @@
 import math
 import bpy
-from mathutils import Matrix
 from arnold import *
 from . import utils
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, FloatVectorProperty, EnumProperty
@@ -102,7 +101,6 @@ class Camera():
         self.ArnoldCamera = acam
         self.name = self.camera.name
         AiNodeSetStr(acam,b"name",self.name.encode('utf-8'))
-        #AiNodeSetInt(acam,b"handedness",1)
  
         # FOV
         if self.render.size_x > self.render.size_y:
@@ -119,8 +117,8 @@ class Camera():
         # matrix
         matrices = AiArrayAllocate(1, 1, AI_TYPE_MATRIX);
         bmatrix= self.scene.camera.matrix_world.copy()
-        bmatrix = Matrix.Rotation(math.radians(-90),4,'X')  * bmatrix 
-        matrix = utils.MakeAtMatrix(bmatrix)
+        #bmatrix = Matrix.Rotation(math.radians(-90),4,'X')  * bmatrix 
+        matrix = utils.getYUpMatrix(bmatrix)
         AiArraySetMtx(matrices,  0 , matrix)
         AiNodeSetArray(acam, b"matrix", matrices)
         # clipping
@@ -130,4 +128,4 @@ class Camera():
         AiNodeSetFlt(acam,b"aperture_size",self.camera.BtoA_aperture_size)
         fpAr = AiArrayAllocate(1, 1, AI_TYPE_FLOAT)
         AiArraySetFlt(fpAr, 0, self.camera.dof_distance)
-        AiNodeSetArray(acam,b"focal_distance",fpAr)
+        AiNodeSetArray(acam,b"focus_distance",fpAr)

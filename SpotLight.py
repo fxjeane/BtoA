@@ -1,6 +1,5 @@
 import imp
 import math
-from mathutils import Matrix
 from arnold import *
 from . import utils
 
@@ -21,8 +20,8 @@ class SpotLight(BaseLight.BaseLight):
         # set the matrix
         # fist apply the matrix
         matrices = AiArrayAllocate(1, 1, AI_TYPE_MATRIX);
-        lmatrix = Matrix.Rotation(math.radians(-90),4,'X') * self.light.matrix_world
-        matrix = utils.MakeAtMatrix(lmatrix)
+        lmatrix = self.light.matrix_world
+        matrix = utils.getYUpMatrix(lmatrix)
         AiArraySetMtx(matrices,  0 , matrix)
         AiNodeSetArray(self.alight, b"matrix", matrices)
         

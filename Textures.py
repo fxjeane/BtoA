@@ -13,7 +13,7 @@ pm = properties_texture
 for member in dir(pm):
     subclass = getattr(pm, member)
     try:
-        print (subclass.bl_label)
+        #print (subclass.bl_label)
         if subclass.bl_label not in ["xxxreview"]:
             subclass.COMPAT_ENGINES.add('BtoA')
             pass

@@ -1,15 +1,14 @@
 import imp
 from arnold import *
-from ..Materials import pollMaterial
 
 from bpy.props import (CollectionProperty,StringProperty, BoolProperty,
 IntProperty, FloatProperty, FloatVectorProperty, EnumProperty, PointerProperty)
 from bl_ui import properties_material
 pm = properties_material
 
-if "bpy" in locals():
-    pass
-else:
+from ..GuiUtils import pollMaterial
+
+if "bpy" not in locals():
     import bpy
 
 enumValue = ("STANDARD","Standard","")
@@ -114,6 +113,23 @@ class BtoAStandardMaterialSettings(bpy.types.PropertyGroup):
 #STRING        aov_reflection                    reflection
 #STRING        aov_refraction                    refraction
 #STRING        aov_sss                           sss
+
+class BtoAStandardMaterialOpacityGui(pm.MaterialButtonsPanel, bpy.types.Panel):
+    bl_label = "Opacity"
+    COMPAT_ENGINES = {'BtoA'}
+
+    @classmethod
+    def poll(cls, context):
+        return pollMaterial(cls,context,enumValue[0] )
+
+    def draw(self, context):
+        mat = pm.active_node_mat(context.material)
+        st = mat.BtoA.standard
+        layout = self.layout
+        split = layout.split()
+        col1 = split.column()
+        col2 = split.column()
+        col1.prop(st,"opacity",text="Opacity")
 
 class BtoAStandardMaterialDiffuseGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Diffuse"
@@ -267,22 +283,6 @@ class BtoAStandardMaterialSSSGui(pm.MaterialButtonsPanel, bpy.types.Panel):
         col1.prop(st,"Ksss",text="Intensity")
         col2.prop(st,"sss_radius",text="SSS Radius")
 
-class BtoAStandardMaterialOpacityGui(pm.MaterialButtonsPanel, bpy.types.Panel):
-    bl_label = "Opacity"
-    COMPAT_ENGINES = {'BtoA'}
-
-    @classmethod
-    def poll(cls, context):
-        return pollMaterial(cls,context,enumValue[0] )
-
-    def draw(self, context):
-        mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"opacity",text="Opacity")
 
 def writeMaterial(mat,textures):
     tslots = {}

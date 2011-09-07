@@ -1,6 +1,8 @@
-import imp
+import imp,os,glob
 from arnold import *
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, FloatVectorProperty, EnumProperty
+from bpy.props import (CollectionProperty,StringProperty, BoolProperty,
+                       IntProperty, FloatProperty, FloatVectorProperty,
+                       EnumProperty, PointerProperty)
 from bl_ui.properties_data_lamp import DataButtonsPanel
 
 if "bpy" in locals():
@@ -11,24 +13,14 @@ else:
     from . import PointLight
     from . import SpotLight
 
+def updateBlenderLight(self,context):
+    atype = context.lamp.BtoA.lightType
+    context.lamp.type = self.arnoldBlenderMap[atype]
+    
 #################
 # Lamp
 ################
 Lamp = bpy.types.Lamp
-Lamp.BtoA_exposure = FloatProperty(name="Exposure",description="Light Exposure",
-                    min=0,max=100,default=0)
-Lamp.BtoA_shadow_enable = BoolProperty(name="Enable Shadows",description="",default=True)
-
-Lamp.BtoA_shadow_density = FloatProperty(name="Density",description="Shadow Density",
-                                        min = 0,max=1000,default=1)
-
-Spot = bpy.types.SpotLamp
-Spot.BtoA_penumbra_angle = FloatProperty(name="Penumbra Angle",description="Penumbra Angle",
-        min = 0,max=180,default=1,subtype="ANGLE")
-Spot.BtoA_aspect_ratio = FloatProperty(name="Aspect Ratio",description="Aspect",
-        min = 0,max=10,default=1)
-
-
 
 class BtoA_lamp_ui(DataButtonsPanel, bpy.types.Panel):
     bl_label = "Lamp"
@@ -38,39 +30,63 @@ class BtoA_lamp_ui(DataButtonsPanel, bpy.types.Panel):
         layout = self.layout
 
         lamp = context.lamp
-
-        layout.prop(lamp, "type", expand=True)
+        bt = lamp.BtoA
+        layout.prop(bt,"lightType",text="Type")
 
         split = layout.split()
+        col1 = split.column()
+        col2 = split.column()
+        col1.prop(lamp, "color", text="")
+        col1.prop(lamp, "energy")
+        col1.prop(bt,"exposure")
+        col2.prop(lamp, "use_specular")
+        col2.prop(lamp, "use_diffuse")
 
-        col = split.column()
-        sub = col.column()
-        sub.prop(lamp, "color", text="")
-        sub.prop(lamp, "energy")
-        sub.prop(lamp,"BtoA_exposure")
+class BtoALampSettings(bpy.types.PropertyGroup):
+    name="BtoALampSettings"
+    #################   
+    # Import Modules from default folder
+    #################
+    defaultLightsDir = os.path.join(os.path.dirname(__file__),"lights")
+    defaultLights = glob.glob(os.path.join(defaultLightsDir,"*.py"))
+    # if the dir is not a "module", lets turn it into one
+    if not os.path.exists(os.path.join(defaultLightsDir,"__init__py")):
+        fin = open(os.path.join(defaultLightsDir,"__init__.py"),'w')
+        fin.close()
 
-        #if lamp.type in {'POINT', 'SPOT'}:
-            #sub.label(text="Falloff:")
-            #sub.prop(lamp, "falloff_type", text="")
-            #sub.prop(lamp, "distance")
+    # load all materials from the materials folder
+    lights = []
+    loadedLights = {}
+    arnoldBlenderMap = {}
+    for modulePath in defaultLights:
+        module = os.path.basename(modulePath)
+        moduleName = module[:-3]
+        if module == '__init__.py' or module[-3:] != '.py':
+            continue
+        print("Loading ",module) 
+        foo = __import__("BtoA.lights."+moduleName, locals(), globals())
+        module = eval("foo.lights."+moduleName)
+        lights.append(module.enumValue)
+        vars()[moduleName] = PointerProperty(type=module.className)
+        loadedLights[module.enumValue[0]] = module
+        arnoldBlenderMap[module.enumValue[0]]=module.blenderType
 
-            #if lamp.falloff_type == 'LINEAR_QUADRATIC_WEIGHTED':
-            #    col.label(text="Attenuation Factors:")
-            #    sub = col.column(align=True)
-            #    sub.prop(lamp, "linear_attenuation", slider=True, text="Linear")
-            #    sub.prop(lamp, "quadratic_attenuation", slider=True, text="Quadratic")
+    
+    lightType = EnumProperty(items=lights,
+                             name="Light", description="Light", 
+                             default="POINTLIGHT",update=updateBlenderLight)
+    # attrubutes that are common to all lights
+    exposure = FloatProperty(name="Exposure",
+                            description="Light Exposure",
+                            min=0,max=100,default=0)
+    shadow_enable = BoolProperty(name="Enable Shadows",
+                                description="",default=True)
+    shadow_density = FloatProperty(name="Shadow Density",
+                                   description="Shadow Density",
+                                   min = 0,max=1000,default=1)
+bpy.utils.register_class(BtoALampSettings)
+bpy.types.Lamp.BtoA = PointerProperty(type=BtoALampSettings,name='BtoA')
 
-            #col.prop(lamp, "use_sphere")
-
-        if lamp.type == 'AREA':
-            col.prop(lamp, "distance")
-            col.prop(lamp, "gamma")
-
-        col = split.column()
-        #col.prop(lamp, "use_negative")
-        col.prop(lamp, "use_own_layer", text="This Layer Only")
-        col.prop(lamp, "use_specular")
-        col.prop(lamp, "use_diffuse")
 
 class BtoA_shadow_ui(DataButtonsPanel, bpy.types.Panel):
     bl_label = "Shadow"
@@ -79,48 +95,29 @@ class BtoA_shadow_ui(DataButtonsPanel, bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         lamp = context.lamp
-        engine = context.scene.render.engine
-        return (lamp and lamp.type in {'POINT', 'SUN', 'SPOT', 'AREA'}) and (engine in cls.COMPAT_ENGINES)
+        engine = context.scene.render.engine in cls.COMPAT_ENGINES
+        ltype = lamp.type in {'POINT', 'SUN', 'SPOT', 'AREA'}
+        return lamp and ltype and engine
 
     def draw(self, context):
         layout = self.layout
-
         lamp = context.lamp
+        bt = lamp.BtoA
+        layout.prop(bt,"shadow_enable")
 
-        #layout.prop(lamp, "shadow_method", expand=True)
-        layout.prop(lamp,"BtoA_shadow_enable")
-
-        #if lamp.shadow_method == 'NOSHADOW' and lamp.type == 'AREA':
-        #    split = layout.split()
-
-         #   col = split.column()
-         #   col.label(text="Form factor sampling:")
-
-          #  sub = col.row(align=True)
-
-           # if lamp.shape == 'SQUARE':
-           #     sub.prop(lamp, "shadow_ray_samples_x", text="Samples")
-           # elif lamp.shape == 'RECTANGLE':
-           #     sub.prop(lamp, "shadow_ray_samples_x", text="Samples X")
-           #     sub.prop(lamp, "shadow_ray_samples_y", text="Samples Y")
-
-        if (lamp.BtoA_shadow_enable):
+        if (bt.shadow_enable):
             split = layout.split()
-            col = split.column()
-            col.prop(lamp, "shadow_color")
-            col.prop(lamp, "BtoA_shadow_density", text="Density")
-
-            col = split.column()
-            col.prop(lamp, "use_shadow_layer", text="This Layer Only")
-            #col.prop(lamp, "use_only_shadow")
-
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(lamp, "shadow_color")
+            col1.prop(bt, "shadow_density", text="Density")
+            col2.prop(lamp, "use_shadow_layer", text="This Layer Only")
             split = layout.split()
-        
-            col = split.column()
-            col.label(text="Sampling:")
+            col1 = split.column()
+            col1.label(text="Sampling:")
 
             if lamp.type in {'POINT', 'SUN', 'SPOT'}:
-                sub = col.row()
+                sub = col1.row()
                 sub.prop(lamp, "shadow_ray_samples", text="Samples")
                 sub.prop(lamp, "shadow_soft_size", text="Soft Size")
 
@@ -133,51 +130,7 @@ class BtoA_shadow_ui(DataButtonsPanel, bpy.types.Panel):
                     sub.prop(lamp, "shadow_ray_samples_x", text="Samples X")
                     sub.prop(lamp, "shadow_ray_samples_y", text="Samples Y")
 
-                #col.row().prop(lamp, "shadow_ray_sample_method", expand=True)
-
-                #if lamp.shadow_ray_sample_method == 'ADAPTIVE_QMC':
-                #    layout.prop(lamp, "shadow_adaptive_threshold", text="Threshold")
-
-            if lamp.type == 'AREA' and lamp.shadow_ray_sample_method == 'CONSTANT_JITTERED':
-                row = layout.row()
-                row.prop(lamp, "use_umbra")
-                row.prop(lamp, "use_dither")
-                row.prop(lamp, "use_jitter")
-
-class BtoA_spotlamp_ui(DataButtonsPanel, bpy.types.Panel):
-    bl_label = "Spot Shape"
-    COMPAT_ENGINES = {'BtoA'}
-
-    @classmethod
-    def poll(cls, context):
-        lamp = context.lamp
-        engine = context.scene.render.engine
-        return (lamp and lamp.type == 'SPOT') and (engine in cls.COMPAT_ENGINES)
-
-    def draw(self, context):
-        layout = self.layout
-        lamp = context.lamp
-        split = layout.split()
-
-        col = split.column()
-        sub = col.column()
-        sub.prop(lamp, "spot_size", text="Cone Angle")
-        sub.prop(lamp, "BtoA_penumbra_angle", text="Penumbra")
-        sub.prop(lamp, "BtoA_aspect_ratio", text="Aspect Ratio")
-        #col.prop(lamp, "use_square")
-        col.prop(lamp, "show_cone")
-
-        col = split.column()
-
-        #col.prop(lamp, "use_halo")
-        #sub = col.column(align=True)
-        #sub.active = lamp.use_halo
-        #sub.prop(lamp, "halo_intensity", text="Intensity")
-        #if lamp.shadow_method == 'BUFFER_SHADOW':
-            #sub.prop(lamp, "halo_step", text="Step")
-
-del DataButtonsPanel
-
+#del DataButtonsPanel
 
 
 class Lights:

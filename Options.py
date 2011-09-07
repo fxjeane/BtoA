@@ -9,7 +9,6 @@ class Options:
     
     def setOutput(self,filter,driver,outType="RGBA"):    
         outStr= "%s %s %s %s"%(outType,outType,filter,driver)
-        #print (outStr) 
         outs = AiArray(1, 1, AI_TYPE_STRING, outStr.encode('utf-8'))
         AiNodeSetArray(self.options,b"outputs",outs)
    
@@ -25,27 +24,27 @@ class Options:
         #AiNodeSetFlt(self.options,b"AA_sample_clamp",0.5)
         
         # bucketing
-        AiNodeSetInt(self.options,b"bucket_scanning",int(self.scene.BtoA_bucket_scanning))
-        AiNodeSetInt(self.options,b"bucket_size",self.scene.BtoA_bucket_size)
+        AiNodeSetInt(self.options,b"bucket_scanning",int(self.scene.BtoA.bucket_scanning))
+        AiNodeSetInt(self.options,b"bucket_size",self.scene.BtoA.bucket_size)
         # AA Settings
-        AiNodeSetInt(self.options,b"AA_samples",self.scene.BtoA_AA_samples)
-        AiNodeSetInt(self.options,b"AA_seed",self.scene.BtoA_AA_seed)
-        AiNodeSetInt(self.options,b"AA_pattern",int(self.scene.BtoA_AA_pattern))
+        AiNodeSetInt(self.options,b"AA_samples",self.scene.BtoA.AA_samples)
+        AiNodeSetInt(self.options,b"AA_seed",self.scene.BtoA.AA_seed)
+        AiNodeSetInt(self.options,b"AA_pattern",int(self.scene.BtoA.AA_pattern))
         AiNodeSetInt(self.options,b"AA_motionblur_pattern",
-                    int(self.scene.BtoA_AA_motionblur_pattern))
-        AiNodeSetFlt(self.options,b"AA_sample_clamp",self.scene.BtoA_AA_sample_clamp)
+                    int(self.scene.BtoA.AA_motionblur_pattern))
+        AiNodeSetFlt(self.options,b"AA_sample_clamp",self.scene.BtoA.AA_sample_clamp)
         AiNodeSetBool(self.options,b"AA_sample_clamp_affects_aovs",
-                    self.scene.BtoA_AA_clamp_affect_aovs)
+                    self.scene.BtoA.AA_clamp_affect_aovs)
         AiNodeSetInt(self.options,b"AA_sampling_dither",
-                    self.scene.BtoA_AA_sampling_dither)
+                    self.scene.BtoA.AA_sampling_dither)
         
         # Ray Samples
-        AiNodeSetInt(self.options,b"GI_diffuse_samples",self.scene.BtoA_GI_diffuse_samples)
+        AiNodeSetInt(self.options,b"GI_diffuse_samples",self.scene.BtoA.GI_diffuse_samples)
 
         # Ray Depth
-        AiNodeSetInt(self.options,b"GI_diffuse_depth",self.scene.BtoA_GI_diffuse_depth)
-        AiNodeSetInt(self.options,b"GI_glossy_depth",self.scene.BtoA_GI_glossy_depth)
-        AiNodeSetInt(self.options,b"GI_reflection_depth",self.scene.BtoA_GI_reflection_depth)
-        AiNodeSetInt(self.options,b"GI_refraction_depth",self.scene.BtoA_GI_refraction_depth)
+        AiNodeSetInt(self.options,b"GI_diffuse_depth",self.scene.BtoA.GI_diffuse_depth)
+        AiNodeSetInt(self.options,b"GI_glossy_depth",self.scene.BtoA.GI_glossy_depth)
+        AiNodeSetInt(self.options,b"GI_reflection_depth",self.scene.BtoA.GI_reflection_depth)
+        AiNodeSetInt(self.options,b"GI_refraction_depth",self.scene.BtoA.GI_refraction_depth)
 
 
