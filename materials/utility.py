@@ -54,26 +54,26 @@ class BtoA_material_utility_gui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        layout = self.layout
-		# Here we see mat.BtoA.utility . The "utility" part is created by the 
-		# auto loader and it is derived from the python module name. In this case
-		# utility.py
-        layout.prop(mat.BtoA.utility,"colorMode")
-        layout.prop(mat.BtoA.utility,"shadeMode")
-        layout.prop(mat.BtoA.utility,"color")
-        layout.prop(mat.BtoA.utility,"opacity")
+        if mat:
+            layout = self.layout
+            # Here we see mat.BtoA.utility . The "utility" part is created by the 
+            # auto loader and it is derived from the python module name. In this case
+            # utility.py
+            layout.prop(mat.BtoA.utility,"colorMode")
+            layout.prop(mat.BtoA.utility,"shadeMode")
+            layout.prop(mat.BtoA.utility,"color")
+            layout.prop(mat.BtoA.utility,"opacity")
 
 # Every material module MUST have a writeMaterial function where the 
 # material is actually inserted into the Arnold scene.
-def writeMaterial(mat,textures):
+def write(mat,textures):
     util = mat.BtoA.utility
     node = AiNode(b"utility")
     AiNodeSetInt(node,b"color_mode",int(util.colorMode))
     AiNodeSetInt(node,b"shade_mode",int(util.shadeMode))
     AiNodeSetRGB(node,b"color",util.color.r,
-                              util.color.g,
-                              util.color.b)
+                               util.color.g,
+                               util.color.b)
     AiNodeSetFlt(node,b"opacity",util.opacity)
     return node
 
-del properties_material

@@ -36,11 +36,16 @@ class BtoA_lamp_ui(DataButtonsPanel, bpy.types.Panel):
         split = layout.split()
         col1 = split.column()
         col2 = split.column()
-        col1.prop(lamp, "color", text="")
+        col1.prop(lamp, "color", text="Color")
         col1.prop(lamp, "energy")
         col1.prop(bt,"exposure")
+        col1.prop(bt,"bounces",text="Bounces")
+        col1.prop(bt,"mis",text="Mis")
+        col2.label("Affect:")
         col2.prop(lamp, "use_specular")
         col2.prop(lamp, "use_diffuse")
+        col2.prop(bt,"normalize",text="Normalize")
+        col2.prop(bt,"bounce_factor",text="Bounce Factor")
 
 class BtoALampSettings(bpy.types.PropertyGroup):
     name="BtoALampSettings"
@@ -63,7 +68,7 @@ class BtoALampSettings(bpy.types.PropertyGroup):
         moduleName = module[:-3]
         if module == '__init__.py' or module[-3:] != '.py':
             continue
-        print("Loading ",module) 
+        print("BtoA:: Loading %s" % moduleName) 
         foo = __import__("BtoA.lights."+moduleName, locals(), globals())
         module = eval("foo.lights."+moduleName)
         lights.append(module.enumValue)
@@ -76,9 +81,15 @@ class BtoALampSettings(bpy.types.PropertyGroup):
                              name="Light", description="Light", 
                              default="POINTLIGHT",update=updateBlenderLight)
     # attrubutes that are common to all lights
+    normalize = BoolProperty(name="Normalize",default=True)
+    bounces = IntProperty(name="Bounces",description="Max bounces for this light",
+                          default=999)
+    bounce_factor = FloatProperty(name="Bounce Factor",
+                            min=0,max=10,default=1)
     exposure = FloatProperty(name="Exposure",
                             description="Light Exposure",
                             min=0,max=100,default=0)
+    mis = BoolProperty(name="Mis",default=True)
     shadow_enable = BoolProperty(name="Enable Shadows",
                                 description="",default=True)
     shadow_density = FloatProperty(name="Shadow Density",
@@ -95,9 +106,12 @@ class BtoA_shadow_ui(DataButtonsPanel, bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         lamp = context.lamp
-        engine = context.scene.render.engine in cls.COMPAT_ENGINES
-        ltype = lamp.type in {'POINT', 'SUN', 'SPOT', 'AREA'}
-        return lamp and ltype and engine
+        if lamp:
+            engine = context.scene.render.engine in cls.COMPAT_ENGINES
+            ltype = lamp.type in {'POINT', 'SUN', 'SPOT', 'AREA'}
+            return lamp and ltype and engine
+        else:
+            return False
 
     def draw(self, context):
         layout = self.layout
@@ -130,21 +144,20 @@ class BtoA_shadow_ui(DataButtonsPanel, bpy.types.Panel):
                     sub.prop(lamp, "shadow_ray_samples_x", text="Samples X")
                     sub.prop(lamp, "shadow_ray_samples_y", text="Samples Y")
 
-#del DataButtonsPanel
-
-
 class Lights:
     '''This class handles the export of all lights'''
     def __init__(self):
-        pass
+        self.lightDict = {}
         
     def writeLights(self):
-        for i in bpy.data.lamps:
-            if i.type == 'POINT':
-               light = PointLight.PointLight(i)
-               light.write()
-            elif i.type == 'SPOT':
-               light = SpotLight.SpotLight(i)
-               light.write()
+        for li in bpy.data.lamps:
+            self.writeLight(li)
 
+    def writeLight(self,li):
+        outli = None
+        currentLight = li.BtoA.loadedLights[li.BtoA.lightType]
+        outli = currentLight.write(li)
 
+        AiNodeSetStr(outli,b"name",li.name.encode('utf-8'))
+        self.lightDict[li.as_pointer()] = outli
+        return outli

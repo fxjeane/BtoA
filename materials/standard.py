@@ -124,12 +124,13 @@ class BtoAStandardMaterialOpacityGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"opacity",text="Opacity")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st,"opacity",text="Opacity")
 
 class BtoAStandardMaterialDiffuseGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Diffuse"
@@ -140,16 +141,17 @@ class BtoAStandardMaterialDiffuseGui(pm.MaterialButtonsPanel, bpy.types.Panel):
         return pollMaterial(cls,context,enumValue[0] )
 
     def draw(self, context):
-        layout = self.layout
         mat = pm.active_node_mat(context.material)
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(mat.BtoA.standard, "Kd_color", text="")
-        col1.prop(mat.BtoA.standard, "Kd", text="Intensity")
-        col2.prop(mat.BtoA.standard, "diffuse_roughness",text="Roughness")
-        col2.prop(mat.BtoA.standard, "direct_diffuse",text="Direct Diffuse")
-        col2.prop(mat.BtoA.standard, "indirect_diffuse",text="Indirect Diffuse")
+        if mat:
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(mat.BtoA.standard, "Kd_color", text="")
+            col1.prop(mat.BtoA.standard, "Kd", text="Intensity")
+            col2.prop(mat.BtoA.standard, "diffuse_roughness",text="Roughness")
+            col2.prop(mat.BtoA.standard, "direct_diffuse",text="Direct Diffuse")
+            col2.prop(mat.BtoA.standard, "indirect_diffuse",text="Indirect Diffuse")
 
 class BtoAStandardMaterialSpecularGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Specular"
@@ -161,24 +163,25 @@ class BtoAStandardMaterialSpecularGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st, "Ks_color", text="")
-        col1.prop(st, "Ks", text="Intensity")
-        col2.prop(st, "specular_brdf", text="")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st, "Ks_color", text="")
+            col1.prop(st, "Ks", text="Intensity")
+            col2.prop(st, "specular_brdf", text="")
 
-        col2.prop(st, "specular_roughness", text="Roughness")
-        if st.specular_brdf == "1":
-            col1.prop(st, "specular_anisotropy", text="Anisotropy")
-            col2.prop(st, "specular_rotation", text="Rotation")
-        if st.specular_brdf == "0":
-            col1.prop(st,"Phong_exponent",text="Phong Exponent")
+            col2.prop(st, "specular_roughness", text="Roughness")
+            if st.specular_brdf == "1":
+                col1.prop(st, "specular_anisotropy", text="Anisotropy")
+                col2.prop(st, "specular_rotation", text="Rotation")
+            if st.specular_brdf == "0":
+                col1.prop(st,"Phong_exponent",text="Phong Exponent")
 
-        col2.prop(st, "direct_specular", text="Direct Specular")
-        col2.prop(st, "indirect_specular", text="Indirect Specular")
+            col2.prop(st, "direct_specular", text="Direct Specular")
+            col2.prop(st, "indirect_specular", text="Indirect Specular")
 
 class BtoAStandardMaterialReflGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Reflection"
@@ -190,17 +193,18 @@ class BtoAStandardMaterialReflGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"Kr_color",text="")
-        col1.prop(st,"Kr",text="Reflection")
-        col2.prop(st,"reflection_exit_color",text="Exit Color")
-        col2.prop(st,"reflection_exit_use_environment",text="Use Environment")
-        col2.prop(st,"enable_reflective_caustics",text="Reflective Caustics")
-        col2.prop(st,"enable_internal_reflections",text="Internal Reflection")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st,"Kr_color",text="")
+            col1.prop(st,"Kr",text="Reflection")
+            col2.prop(st,"reflection_exit_color",text="Exit Color")
+            col2.prop(st,"reflection_exit_use_environment",text="Use Environment")
+            col2.prop(st,"enable_reflective_caustics",text="Reflective Caustics")
+            col2.prop(st,"enable_internal_reflections",text="Internal Reflection")
 
 class BtoAStandardMaterialRefrGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Refraction"
@@ -212,18 +216,19 @@ class BtoAStandardMaterialRefrGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"Kt_color",text="")
-        col1.prop(st,"Kt",text="Refractive")
-        col1.prop(st,"transmittance",text="Transmitance Col")
-        col2.prop(st,"refraction_exit_color",text="Exit Color")
-        col2.prop(st,"refraction_exit_use_environment",text="Use Environment")
-        col2.prop(st,"IOR")
-        col2.prop(st,"enable_refractive_caustics",text="Refractive Caustics")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st,"Kt_color",text="")
+            col1.prop(st,"Kt",text="Refractive")
+            col1.prop(st,"transmittance",text="Transmitance Col")
+            col2.prop(st,"refraction_exit_color",text="Exit Color")
+            col2.prop(st,"refraction_exit_use_environment",text="Use Environment")
+            col2.prop(st,"IOR")
+            col2.prop(st,"enable_refractive_caustics",text="Refractive Caustics")
 
 class BtoAStandardMaterialFresnelGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Fresnel"
@@ -235,16 +240,17 @@ class BtoAStandardMaterialFresnelGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"Fresnel")
-        col1.prop(st,"Fresnel_affect_diff",text="Diffuse Fresnel")
-        col1.prop(st,"specular_Fresnel",text="Specular Fresnel")
-        col2.prop(st,"Krn",text="Reflection Fresnel")
-        col2.prop(st,"Ksn",text="Specular Fresnel")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st,"Fresnel")
+            col1.prop(st,"Fresnel_affect_diff",text="Diffuse Fresnel")
+            col1.prop(st,"specular_Fresnel",text="Specular Fresnel")
+            col2.prop(st,"Krn",text="Reflection Fresnel")
+            col2.prop(st,"Ksn",text="Specular Fresnel")
 
 class BtoAStandardMaterialEmissionGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Emission"
@@ -256,13 +262,14 @@ class BtoAStandardMaterialEmissionGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"emission_color",text="")
-        col2.prop(st,"emission",text="Intensity")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st,"emission_color",text="")
+            col2.prop(st,"emission",text="Intensity")
 
 class BtoAStandardMaterialSSSGui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Subsurface Scattering"
@@ -274,17 +281,17 @@ class BtoAStandardMaterialSSSGui(pm.MaterialButtonsPanel, bpy.types.Panel):
 
     def draw(self, context):
         mat = pm.active_node_mat(context.material)
-        st = mat.BtoA.standard
-        layout = self.layout
-        split = layout.split()
-        col1 = split.column()
-        col2 = split.column()
-        col1.prop(st,"Ksss_color",text="")
-        col1.prop(st,"Ksss",text="Intensity")
-        col2.prop(st,"sss_radius",text="SSS Radius")
+        if mat:
+            st = mat.BtoA.standard
+            layout = self.layout
+            split = layout.split()
+            col1 = split.column()
+            col2 = split.column()
+            col1.prop(st,"Ksss_color",text="")
+            col1.prop(st,"Ksss",text="Intensity")
+            col2.prop(st,"sss_radius",text="SSS Radius")
 
-
-def writeMaterial(mat,textures):
+def write(mat,textures):
     tslots = {}
     tslots['kd_color'] = None
 
@@ -400,4 +407,3 @@ def writeMaterial(mat,textures):
 
 className= BtoAStandardMaterialSettings
 bpy.utils.register_class(className)
-del properties_material

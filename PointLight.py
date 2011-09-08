@@ -8,9 +8,7 @@ else:
     import bpy
     from . import BaseLight
 
-
 class PointLight(BaseLight.BaseLight):
-    
     def __init__(self, light):
         super(PointLight,self).__init__(light)
          

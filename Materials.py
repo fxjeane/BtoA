@@ -12,10 +12,31 @@ else:
 
 for member in dir(properties_material):
     subclass = getattr(properties_material, member)
+
     try:
-        if subclass.bl_label in ["Preview"]:
-            subclass.COMPAT_ENGINES.add('BtoA')
-            pass
+        # this is a horrible hack. Must figure out how to get this to work better
+        subclass.COMPAT_ENGINES.add('BtoA')
+        if subclass.bl_label in ["Material Specials",
+"SSS Presets",
+"Custom Properties",
+"Diffuse",
+"Flare",
+"Halo",
+"Mirror",
+"Options",
+"Physics",
+"Render Pipeline Options",
+"Shading",
+"Shadow",
+"Specular",
+"Subsurface Scattering",
+"Strand",
+"Density",
+"Integration",
+"Transparency",
+"Lighting"]:
+            subclass.COMPAT_ENGINES.remove('BtoA')
+
     except:
         pass
 ########################
@@ -25,7 +46,6 @@ for member in dir(properties_material):
 ########################
 def rnaPropUpdate(self, context):
     self.update_tag()
-
 
 class BtoA_material_shader_gui(pm.MaterialButtonsPanel, bpy.types.Panel):
     bl_label = "Arnold Shader"
@@ -63,7 +83,7 @@ class BtoAMaterialSettings(bpy.types.PropertyGroup):
         moduleName = module[:-3]
         if module == '__init__.py' or module[-3:] != '.py':
             continue
-        print("Loading ",module) 
+        print("BtoA:: Loading %s"%module) 
         foo = __import__("BtoA.materials."+moduleName, locals(), globals())
         module = eval("foo.materials."+moduleName)
         materials.append(module.enumValue)
@@ -116,8 +136,6 @@ class BtoAMaterialSettings(bpy.types.PropertyGroup):
 bpy.utils.register_class(BtoAMaterialSettings)
 bpy.types.Material.BtoA = PointerProperty(type=BtoAMaterialSettings,name='BtoA')
 
-#del properties_material
-
 class Materials:
     def __init__(self, scene,textures=None):
         self.scene = scene
@@ -128,17 +146,12 @@ class Materials:
 
     def writeMaterials(self):
         for mat in bpy.data.materials:
-            outmat = None
-            currentMaterial = mat.BtoA.loadedMaterials[mat.BtoA.shaderType]
-            outmat = currentMaterial.writeMaterial(mat,self.textures)
-
-            AiNodeSetStr(outmat,b"name",mat.name.encode('utf-8'))
-            self.materialDict[mat.as_pointer()] = outmat
+            self.writeMaterial(mat)
 
     def writeMaterial(self,mat):
         outmat = None
         currentMaterial = mat.BtoA.loadedMaterials[mat.BtoA.shaderType]
-        outmat = currentMaterial.writeMaterial(mat,self.textures)
+        outmat = currentMaterial.write(mat,self.textures)
 
         AiNodeSetStr(outmat,b"name",mat.name.encode('utf-8'))
         self.materialDict[mat.as_pointer()] = outmat
